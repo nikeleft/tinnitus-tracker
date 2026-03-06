@@ -14,7 +14,9 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install --no-package-lock
+          npm install --save-dev @electron-forge/cli @electron-forge/maker-squirrel @electron-forge/maker-zip
 
       - name: Build EXE
         run: npm run make
@@ -22,5 +24,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: My-SNR-App
+          name: SNR-Application
           path: out/make/squirrel.windows/x64/*.exe
