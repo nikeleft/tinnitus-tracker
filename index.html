@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tinnitus Tracker - Δρ. Νίκος Ελευθεριάδης</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --success: #10b981; --danger: #ef4444; --warning: #facc15; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #f8fafc; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        
+        #welcome-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 2000; transition: opacity 0.5s ease; text-align: center; padding: 20px; box-sizing: border-box;
+        }
+        #welcome-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .welcome-title { font-size: 2.2rem; font-weight: 800; color: var(--accent); margin: 0; }
+        .welcome-subtitle { font-size: 1.3rem; color: #f8fafc; margin-top: 10px; font-weight: 300; }
+        .enter-btn { margin-top: 40px; padding: 15px 50px; border-radius: 30px; border: 2px solid var(--accent); background: transparent; color: var(--accent); font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+
+        #app-content { display: none; flex-direction: column; min-height: 100vh; }
+        .tab-content { display: none; padding: 20px; flex-grow: 1; padding-bottom: 90px; width: 100%; box-sizing: border-box; }
+        .tab-content.active { display: flex; flex-direction: column; align-items: center; }
+
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; border-top: 1px solid #334155; height: 65px; z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #94a3b8; cursor: pointer; }
+        .nav-item.active { color: var(--accent); }
+        
+        .card { background: var(--card); padding: 1.2rem; border-radius: 20px; width: 100%; max-width: 450px; border: 1px solid #334155; box-sizing: border-box; margin-bottom: 15px; }
+        .display { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 10px 0; color: var(--accent); display: flex; justify-content: center; align-items: center; gap: 8px; }
+        #freqInput { background: transparent; border: 2px solid #334155; color: var(--accent); font-size: 1.6rem; font-weight: bold; width: 100px; text-align: center; border-radius: 10px; }
+        .help-icon { font-size: 0.8rem; color: #94a3b8; cursor: pointer; border: 1px solid #475569; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; margin-left: 5px; }
+        
+        .row { display: flex; justify-content: center; gap: 8px; width: 100%; margin-top: 5px; }
+        button { padding: 10px; border-radius: 10px; border: none; font-weight: 600; background: #334155; color: white; cursor: pointer; }
+        button.active { background: var(--accent); color: var(--bg); }
+        input[type=range] { width: 100%; accent-color: var(--accent); height: 25px; }
+        
+        .play-controls { display: flex; gap: 10px; margin-top: 15px; width: 100%; }
+        .play-btn { background: #0ea5e9; flex: 1; font-size: 1.3rem; }
+        .stop-btn { background: var(--danger); flex: 1; font-size: 1.3rem; }
+        .save-btn { background: var(--success); width: 100%; margin-top: 15px; padding: 15px; font-size: 1rem; }
+        .chart-box { background: var(--card); border-radius: 15px; padding: 10px; border: 1px solid #334155; margin-bottom: 20px; width: 100%; max-width: 500px; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .log-table th, .log-table td { padding: 8px; border-bottom: 1px solid #334155; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-screen">
+        <h1 class="welcome-title">tinnitus tracker</h1>
+        <div class="welcome-subtitle">Δρ. Νίκος Ελευθεριάδης</div>
+        <button class="enter-btn" onclick="startApp()">είσοδος</button>
+    </div>
+
+    <div id="app-content">
+        <div id="setup" class="tab-content active">
+            <div class="card">
+                <h3 style="text-align:center; margin:0 0 10px; color:#94a3b8;">ρυθμίσεις ήχου</h3>
+                
+                <div class="display">
+                    <span>ύψος</span><span class="help-icon" onclick="showHelp('pitch')">?</span>: 
+                    <input type="number" id="freqInput" value="4000"> <span>Hz</span>
+                </div>
+                <input type="range" id="freqSlider" min="125" max="10000" value="4000">
+                <div class="row">
+                    <button id="minusHzBtn">− 1Hz</button>
+                    <button id="plusHzBtn">+ 1Hz</button>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>ένταση <span class="help-icon" onclick="showHelp('vol')">?</span></span>
+                        <span id="volDisplay" style="color:var(--success); font-weight:bold;">10%</span>
+                    </div>
+                    <input type="range" id="volSlider" min="0" max="50" value="10">
+                    <div class="row">
+                        <button id="minusVolBtn">− 1%</button>
+                        <button id="plusVolBtn">+ 1%</button>
+                    </div>
+                    <label style="font-size:0.65rem; color:var(--danger); display:block; margin-top:8px;">
+                        <input type="checkbox" id="unlockVol"> ξεκλείδωμα 100%
+                    </label>
+                </div>
+
+                <div style="margin-top:20px; padding:10px; border:1px dashed var(--warning); border-radius:10px;">
+                    <div style="display:flex; justify-content:space-between; color:var(--warning); font-weight:bold;">
+                        <span>ενοχλητικότητα <span class="help-icon" onclick="showHelp('annoy')">?</span></span>
+                        <span id="annoyDisplay">5/10</span>
+                    </div>
+                    <input type="range" id="annoySlider" min="1" max="10" value="5" style="accent-color:var(--warning);">
+                </div>
+
+                <p style="text-align:center; font-size:0.75rem; color:#94a3b8; margin:15px 0 5px;">επιλογή αυτιού <span class="help-icon" onclick="showHelp('ear')">?</span></p>
+                <div class="row">
+                    <button class="ear-btn" data-val="Left">αριστερό</button>
+                    <button class="ear-btn active" data-val="Both">και τα δύο</button>
+                    <button class="ear-btn" data-val="Right">δεξί</button>
+                </div>
+                
+                <div class="play-controls">
+                    <button id="playBtn" class="play-btn">▶ Παίξε</button>
+                    <button id="stopBtn" class="stop-btn">II Παύση</button>
+                </div>
+                <button id="saveLog" class="save-btn">αποθήκευση μέτρησης</button>
+            </div>
+        </div>
+
+        <div id="charts" class="tab-content">
+            <h3>γραφήματα <span class="help-icon" onclick="showHelp('charts')">?</span></h3>
+            <div class="chart-box"><div style="text-align:center; font-size:0.8rem; color:#94a3b8;">αριστερό αυτί</div><canvas id="chartLeft"></canvas></div>
+            <div class="chart-box"><div style="text-align:center; font-size:0.8rem; color:#94a3b8;">δεξί αυτί</div><canvas id="chartRight"></canvas></div>
+            <div class="chart-box"><div style="text-align:center; font-size:0.8rem; color:#94a3b8;">και τα δύο</div><canvas id="chartBoth"></canvas></div>
+        </div>
+
+        <div id="history" class="tab-content">
+            <h3>ιστορικό <span class="help-icon" onclick="showHelp('history')">?</span></h3>
+            <div class="card" style="padding:5px; overflow-x:auto; width:100%;">
+                <table class="log-table">
+                    <thead><tr><th>ημ/νία</th><th>Hz</th><th>vol</th><th>ενοχλ.</th><th></th></tr></thead>
+                    <tbody id="logBody"></tbody>
+                </table>
+            </div>
+            <div style="width:100%; max-width:450px; margin-top:10px;">
+                <button id="exportBtn" style="width:100%; background:#f59e0b; color:black; margin-bottom:5px;">εξαγωγή σε excel (CSV)</button>
+                <button id="emailBtn" style="width:100%; background:#6366f1; margin-bottom:5px;">αποστολή στο nikeleft@hotmail.com</button>
+                <button id="clearBtn" style="width:100%; background:var(--danger); opacity:0.6; font-size:0.8rem;">καθαρισμός ιστορικού</button>
+            </div>
+        </div>
+
+        <nav class="nav-bar">
+            <div class="nav-item active" onclick="openTab('setup', this)"><span>🎧</span><span>ρύθμιση</span></div>
+            <div class="nav-item" onclick="openTab('charts', this)"><span>📈</span><span>γραφήματα</span></div>
+            <div class="nav-item" onclick="openTab('history', this)"><span>📋</span><span>ιστορικό</span></div>
+        </nav>
+    </div>
+
+    <script>
+        let audioCtx, oscillator, pannerNode, gainNode, charts = {};
+        let currentEar = "Both";
+
+        function startApp() {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('app-content').style.display = 'flex';
+        }
+
+        function showHelp(key) {
+            const texts = {
+                pitch: "Ύψος (Hz): Ρυθμίστε τη συχνότητα για να ταυτιστεί με τον ήχο σας.",
+                vol: "Ένταση: Ρυθμίστε το επίπεδο του ήχου. Χρησιμοποιήστε τα +/- 1% για ακρίβεια.",
+                annoy: "Ενοχλητικότητα: Πόσο έντονα σας ενοχλεί σήμερα (1-10).",
+                ear: "Αυτί: Επιλέξτε πού εντοπίζετε τον ήχο.",
+                charts: "Πορεία συχνότητας και ενοχλητικότητας ανά ημέρα.",
+                history: "Διαχείριση και αποστολή των δεδομένων σας."
+            };
+            alert(texts[key]);
+        }
+
+        function openTab(tabId, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
+            if(tabId === 'charts') renderCharts();
+        }
+
+        function updateFreq(val) {
+            val = Math.max(125, Math.min(10000, parseInt(val) || 125));
+            document.getElementById('freqSlider').value = val;
+            document.getElementById('freqInput').value = val;
+            if (oscillator) oscillator.frequency.setTargetAtTime(val, audioCtx.currentTime, 0.03);
+        }
+
+        function updateVol(val) {
+            const slider = document.getElementById('volSlider');
+            val = Math.max(0, Math.min(parseInt(slider.max), parseInt(val) || 0));
+            slider.value = val;
+            document.getElementById('volDisplay').textContent = val + "%";
+            if (gainNode) gainNode.gain.setTargetAtTime(val / 100, audioCtx.currentTime, 0.05);
+        }
+
+        // --- Event Listeners για Κουμπιά ---
+        document.getElementById('plusHzBtn').onclick = () => updateFreq(parseInt(document.getElementById('freqInput').value) + 1);
+        document.getElementById('minusHzBtn').onclick = () => updateFreq(parseInt(document.getElementById('freqInput').value) - 1);
+        document.getElementById('plusVolBtn').onclick = () => updateVol(parseInt(document.getElementById('volSlider').value) + 1);
+        document.getElementById('minusVolBtn').onclick = () => updateVol(parseInt(document.getElementById('volSlider').value) - 1);
+
+        document.getElementById('freqSlider').oninput = (e) => updateFreq(e.target.value);
+        document.getElementById('freqInput').onchange = (e) => updateFreq(e.target.value);
+        document.getElementById('volSlider').oninput = (e) => updateVol(e.target.value);
+        document.getElementById('annoySlider').oninput = (e) => document.getElementById('annoyDisplay').textContent = e.target.value + "/10";
+        document.getElementById('unlockVol').onchange = (e) => { 
+            const slider = document.getElementById('volSlider');
+            slider.max = e.target.checked ? 100 : 50; 
+            if(slider.value > 50 && !e.target.checked) updateVol(50);
+        };
+
+        // --- Ιστορικό & Γραφήματα ---
+        function saveToLog() {
+            const now = new Date();
+            const entry = {
+                id: Date.now(),
+                dateTime: now.toLocaleDateString('el-GR'),
+                hz: document.getElementById('freqInput').value,
+                vol: document.getElementById('volSlider').value + "%",
+                annoy: document.getElementById('annoySlider').value,
+                earRaw: currentEar
+            };
+            const history = JSON.parse(localStorage.getItem('tinnitusLogs') || '[]');
+            history.unshift(entry);
+            localStorage.setItem('tinnitusLogs', JSON.stringify(history.slice(0, 100)));
+            renderLog();
+            alert("Η μέτρηση αποθηκεύτηκε!");
+        }
+
+        function renderLog() {
+            const history = JSON.parse(localStorage.getItem('tinnitusLogs') || '[]');
+            document.getElementById('logBody').innerHTML = history.map(item => `
+                <tr>
+                    <td>${item.dateTime}</td><td>${item.hz}</td><td>${item.vol}</td><td>${item.annoy}</td>
+                    <td onclick="deleteEntry(${item.id})" style="color:red; cursor:pointer;">✕</td>
+                </tr>`).join('');
+        }
+
+        function deleteEntry(id) {
+            let history = JSON.parse(localStorage.getItem('tinnitusLogs') || '[]');
+            localStorage.setItem('tinnitusLogs', JSON.stringify(history.filter(i => i.id !== id)));
+            renderLog();
+        }
+
+        document.getElementById('exportBtn').onclick = () => {
+            const h = JSON.parse(localStorage.getItem('tinnitusLogs') || '[]');
+            if(h.length === 0) return alert("Δεν υπάρχουν δεδομένα.");
+            let csv = "Ημερομηνία,Hz,Ένταση,Ενοχλητικότητα,Αυτί\n";
+            h.forEach(i => csv += `${i.dateTime},${i.hz},${i.vol},${i.annoy},${i.earRaw}\n`);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "tinnitus_log.csv";
+            link.click();
+        };
+
+        document.getElementById('emailBtn').onclick = () => {
+            const h = JSON.parse(localStorage.getItem('tinnitusLogs') || '[]');
+            let body = "Ιστορικό:\n";
+            h.forEach(i => body += `${i.dateTime}: ${i.hz}Hz, ${i.vol}, Ενοχλ. ${i.annoy}/10\n`);
+            window.location.href = `mailto:nikeleft@hotmail.com?subject=Tinnitus Data&body=${encodeURIComponent(body)}`;
+        };
+
+        // --- Audio Logic ---
+        document.getElementById('playBtn').onclick = () => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator = audioCtx.createOscillator();
+                pannerNode = audioCtx.createStereoPanner();
+                gainNode = audioCtx.createGain();
+                oscillator.connect(pannerNode).connect(gainNode).connect(audioCtx.destination);
+                oscillator.start();
+            } else audioCtx.resume();
+            updateFreq(document.getElementById('freqInput').value);
+            updateVol(document.getElementById('volSlider').value);
+        };
+        document.getElementById('stopBtn').onclick = () => audioCtx && audioCtx.suspend();
+        
+        document.querySelectorAll('.ear-btn').forEach(btn => {
+            btn.onclick = () => {
+                currentEar = btn.getAttribute('data-val');
+                const pan = currentEar === "Left" ? -1 : (currentEar === "Right" ? 1 : 0);
+                if (pannerNode) pannerNode.pan.setTargetAtTime(pan, audioCtx.currentTime, 0.05);
+                document.querySelectorAll('.ear-btn').forEach(b => b.classList.toggle('active', b === btn));
+            };
+        });
+
+        function createSingleChart(id, data) {
+            const ctx = document.getElementById(id).getContext('2d');
+            if (charts[id]) charts[id].destroy();
+            const rev = [...data].reverse();
+            charts[id] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: rev.map(d => d.dateTime),
+                    datasets: [
+                        { label: 'Hz', data: rev.map(d => d.hz), borderColor: '#38bdf8' },
+                        { label: 'Ενοχλ.', data: rev.map(d => d.annoy), borderColor: '#facc15' }
+                    ]
+                }
+            });
+        }
+
+        function renderCharts() {
+            const h = JSON.parse(localStorage.getItem('tinnitusLogs') || '[]');
+            createSingleChart('chartLeft', h.filter(d => d.earRaw === 'Left'));
+            createSingleChart('chartRight', h.filter(d => d.earRaw === 'Right'));
+            createSingleChart('chartBoth', h.filter(d => d.earRaw === 'Both'));
+        }
+
+        document.getElementById('saveLog').onclick = saveToLog;
+        document.getElementById('clearBtn').onclick = () => { if(confirm("Διαγραφή ιστορικού;")) { localStorage.setItem('tinnitusLogs', '[]'); renderLog(); } };
+        window.onload = renderLog;
+    </script>
+</body>
+</html>
