@@ -7,7 +7,7 @@ module.exports = {
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        name: 'snr_app',
+        name: 'SNR_App',
       },
     },
     {
