@@ -1,20 +1,20 @@
 name: Build EXE
-on: [push] # Κάθε φορά που ανεβάζεις κώδικα, θα φτιάχνει το .exe
+on: [push]
 
 jobs:
   build:
-    runs-on: windows-latest # Θα χρησιμοποιήσει έναν υπολογιστή Windows της Microsoft
+    runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Ενημερωμένη έκδοση
 
-      - name: Install Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-size: 18
+          node-version: '20' # Χρησιμοποιούμε την πιο σταθερή έκδοση 20
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm install
 
       - name: Build EXE
-        run: npm run make # Αυτή η εντολή θα δημιουργήσει το αρχείο εγκατάστασης
+        run: npm run make
