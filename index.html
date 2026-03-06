@@ -4,29 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tinnitus Tracker - Δρ. Νίκος Ελευθεριάδης</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2907/2907150.png">
+    <meta name="theme-color" content="#0f172a">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --success: #10b981; --danger: #ef4444; --warning: #facc15; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: #f8fafc; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         
+        /* Αρχική Οθόνη */
         #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; text-align: center; padding: 20px; box-sizing: border-box; }
         #welcome-screen.hidden { display: none; }
         .welcome-title { font-size: 2.2rem; font-weight: 800; color: var(--accent); margin: 0; }
-        .enter-btn { margin-top: 40px; padding: 15px 50px; border-radius: 30px; border: 2px solid var(--accent); background: transparent; color: var(--accent); font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+        .enter-btn { margin-top: 30px; padding: 15px 50px; border-radius: 30px; border: 2px solid var(--accent); background: transparent; color: var(--accent); font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+        #installBtn { display: none; margin-top: 20px; background: var(--success); color: white; border: none; border-radius: 12px; padding: 12px 25px; font-weight: bold; cursor: pointer; }
 
         #app-content { display: none; flex-direction: column; min-height: 100vh; }
         .tab-content { display: none; padding: 20px; flex-grow: 1; padding-bottom: 90px; width: 100%; box-sizing: border-box; }
         .tab-content.active { display: flex; flex-direction: column; align-items: center; }
 
+        /* Navigation Bar */
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; border-top: 1px solid #334155; height: 65px; z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #94a3b8; cursor: pointer; }
         .nav-item.active { color: var(--accent); }
         
+        /* UI Components */
         .card { background: var(--card); padding: 1.2rem; border-radius: 20px; width: 100%; max-width: 450px; border: 1px solid #334155; box-sizing: border-box; margin-bottom: 15px; }
         .display { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 10px 0; color: var(--accent); display: flex; justify-content: center; align-items: center; gap: 8px; }
-        #freqInput { background: transparent; border: 2px solid #334155; color: var(--accent); font-size: 1.6rem; font-weight: bold; width: 100px; text-align: center; border-radius: 10px; }
+        #freqInput { background: transparent; border: 2px solid #334155; color: var(--accent); font-size: 1.6rem; font-weight: bold; width: 110px; text-align: center; border-radius: 10px; }
         .help-icon { font-size: 0.8rem; color: #94a3b8; cursor: pointer; border: 1px solid #475569; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; margin-left: 5px; }
         
         .row { display: flex; justify-content: center; gap: 8px; width: 100%; margin-top: 5px; }
@@ -36,75 +44,83 @@
         
         .play-btn { background: #0ea5e9; flex: 1; font-size: 1.1rem; }
         .stop-btn { background: var(--danger); flex: 1; font-size: 1.1rem; }
-        .save-btn { background: var(--success); width: 100%; margin-top: 15px; padding: 15px; font-size: 1rem; }
+        .save-btn { background: var(--success); width: 100%; margin-top: 15px; padding: 15px; font-size: 1rem; font-weight: bold; }
         
-        .chart-box { background: var(--card); border-radius: 15px; padding: 10px; border: 1px solid #334155; margin-bottom: 20px; width: 100%; max-width: 500px; }
+        .chart-box { background: var(--card); border-radius: 15px; padding: 10px; border: 1px solid #334155; margin-bottom: 20px; width: 100%; max-width: 500px; height: 250px; }
         .log-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .log-table th, .log-table td { padding: 8px; border-bottom: 1px solid #334155; text-align: left; }
+        .log-table th, .log-table td { padding: 10px 5px; border-bottom: 1px solid #334155; text-align: left; }
     </style>
 </head>
 <body>
 
     <div id="welcome-screen">
         <h1 class="welcome-title">tinnitus tracker</h1>
-        <div style="color:white; margin-top:10px;">Δρ. Νίκος Ελευθεριάδης</div>
+        <div style="color:white; margin-top:10px; font-weight: 300;">Δρ. Νίκος Ελευθεριάδης</div>
         <button class="enter-btn" onclick="startApp()">είσοδος</button>
-        <button id="installBtn" style="display:none; margin-top:20px; background:var(--success); color:white; border-radius:10px; padding:10px;">Εγκατάσταση Εφαρμογής</button>
+        <button id="installBtn">εγκατάσταση εφαρμογής</button>
     </div>
 
     <div id="app-content">
         <div id="setup" class="tab-content active">
             <div class="card">
                 <h3 style="text-align:center; margin:0 0 10px; color:#94a3b8;">ρυθμίσεις ήχου</h3>
+                
                 <div class="display">
                     <span>ύψος</span><span class="help-icon" onclick="showHelp('pitch')">?</span>: 
                     <input type="number" id="freqInput" value="4000"> <span>Hz</span>
                 </div>
                 <input type="range" id="freqSlider" min="125" max="10000" value="4000">
-                <div class="row"><button onclick="stepHz(-1)">− 1Hz</button><button onclick="stepHz(1)">+ 1Hz</button></div>
+                <div class="row">
+                    <button onclick="stepHz(-1)" style="flex:1;">− 1Hz</button>
+                    <button onclick="stepHz(1)" style="flex:1;">+ 1Hz</button>
+                </div>
 
                 <div style="margin-top:20px;">
-                    <div style="display:flex; justify-content:space-between;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span>ένταση <span class="help-icon" onclick="showHelp('vol')">?</span></span>
-                        <span id="volDisplay" style="color:var(--success); font-weight:bold;">10%</span>
+                        <span id="volDisplay" style="color:var(--success); font-weight:bold; font-size:1.4rem;">10%</span>
                     </div>
                     <input type="range" id="volSlider" min="0" max="50" value="10">
-                    <div class="row"><button onclick="stepVol(-1)">− 1%</button><button onclick="stepVol(1)">+ 1%</button></div>
-                    <label style="font-size:0.75rem; color:var(--danger); display:block; margin-top:10px;"><input type="checkbox" id="unlockVol"> ξεκλείδωμα 100%</label>
+                    <div class="row">
+                        <button onclick="stepVol(-1)" style="flex:1;">− 1%</button>
+                        <button onclick="stepVol(1)" style="flex:1;">+ 1%</button>
+                    </div>
+                    <label style="font-size:0.75rem; color:var(--danger); display:block; margin-top:10px;">
+                        <input type="checkbox" id="unlockVol"> ξεκλείδωμα 100%
+                    </label>
                 </div>
 
                 <div style="margin-top:20px; padding:10px; border:1px dashed var(--warning); border-radius:10px;">
                     <div style="display:flex; justify-content:space-between; color:var(--warning); font-weight:bold;">
                         <span>ενοχλητικότητα <span class="help-icon" onclick="showHelp('annoy')">?</span></span>
-                        <span id="annoyDisplay">5/10</span>
+                        <span id="annoyDisplay" style="font-size:1.2rem;">5/10</span>
                     </div>
                     <input type="range" id="annoySlider" min="1" max="10" value="5" style="accent-color:var(--warning);">
                 </div>
 
-                <p style="text-align:center; font-size:0.75rem; color:#94a3b8; margin:15px 0 5px;">επιλογή αυτιού <span class="help-icon" onclick="showHelp('ear')">?</span></p>
-                <div class="row">
-                    <button class="ear-btn" data-val="Left">αριστερό</button>
-                    <button class="ear-btn active" data-val="Both">και τα δύο</button>
-                    <button class="ear-btn" data-val="Right">δεξί</button>
+                <div class="row" style="margin-top:15px;">
+                    <button class="ear-btn" onclick="setEar('Left', this)" style="flex:1;">αριστερό</button>
+                    <button class="ear-btn active" onclick="setEar('Both', this)" style="flex:1;">και τα δύο</button>
+                    <button class="ear-btn" onclick="setEar('Right', this)" style="flex:1;">δεξί</button>
                 </div>
                 
                 <div class="row" style="margin-top:15px; gap:10px;">
-                    <button id="playBtn" class="play-btn">▶ Παίξε</button>
-                    <button id="stopBtn" class="stop-btn">II Παύση</button>
+                    <button id="playBtn" class="play-btn" onclick="toggleAudio(true)">▶ Παίξε</button>
+                    <button id="stopBtn" class="stop-btn" onclick="toggleAudio(false)">II Παύση</button>
                 </div>
-                <button id="saveLog" class="save-btn">αποθήκευση μέτρησης</button>
+                <button class="save-btn" onclick="saveToLog()">ΑΠΟΘΗΚΕΥΣΗ ΜΕΤΡΗΣΗΣ</button>
             </div>
         </div>
 
         <div id="charts" class="tab-content">
-            <h3>γραφήματα <span class="help-icon" onclick="showHelp('charts')">?</span></h3>
+            <h3>γραφήματα πορείας</h3>
             <div class="chart-box"><canvas id="chartLeft"></canvas></div>
             <div class="chart-box"><canvas id="chartRight"></canvas></div>
             <div class="chart-box"><canvas id="chartBoth"></canvas></div>
         </div>
 
         <div id="history" class="tab-content">
-            <h3>ιστορικό <span class="help-icon" onclick="showHelp('history')">?</span></h3>
+            <h3>ιστορικό</h3>
             <div class="card" style="padding:5px; overflow-x:auto; width:100%;">
                 <table class="log-table">
                     <thead><tr><th>ημ/νία</th><th>Hz</th><th>vol</th><th>ενοχλ.</th><th></th></tr></thead>
@@ -112,16 +128,16 @@
                 </table>
             </div>
             <div style="width:100%; max-width:450px; margin-top:10px;">
-                <button id="exportBtn" style="width:100%; background:#f59e0b; color:black; margin-bottom:8px;">εξαγωγή σε excel (CSV)</button>
-                <button id="emailBtn" style="width:100%; background:#6366f1; margin-bottom:8px;">αποστολή στο nikeleft@hotmail.com</button>
-                <button id="clearBtn" style="width:100%; background:var(--danger); opacity:0.8;">καθαρισμός ιστορικού</button>
+                <button onclick="exportCSV()" style="width:100%; background:#f59e0b; color:black; margin-bottom:8px; font-weight:bold;">Εξαγωγή σε Excel (CSV)</button>
+                <button onclick="sendEmail()" style="width:100%; background:#6366f1; margin-bottom:8px; font-weight:bold;">Αποστολή στον Ιατρό</button>
+                <button onclick="clearHistory()" style="width:100%; background:var(--danger); opacity:0.8;">Καθαρισμός Ιστορικού</button>
             </div>
         </div>
 
         <nav class="nav-bar">
-            <div class="nav-item active" onclick="openTab('setup', this)"><span>🎧</span><span>ρύθμιση</span></div>
-            <div class="nav-item" onclick="openTab('charts', this)"><span>📈</span><span>γραφήματα</span></div>
-            <div class="nav-item" onclick="openTab('history', this)"><span>📋</span><span>ιστορικό</span></div>
+            <div id="nav-setup" class="nav-item active" onclick="openTab('setup')"><span>🎧</span><span>ρύθμιση</span></div>
+            <div id="nav-charts" class="nav-item" onclick="openTab('charts')"><span>📈</span><span>γραφήματα</span></div>
+            <div id="nav-history" class="nav-item" onclick="openTab('history')"><span>📋</span><span>ιστορικό</span></div>
         </nav>
     </div>
 
@@ -129,24 +145,31 @@
         let audioCtx, oscillator, pannerNode, gainNode, charts = {};
         let currentEar = "Both";
 
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+
         function startApp() {
             document.getElementById('welcome-screen').classList.add('hidden');
             document.getElementById('app-content').style.display = 'flex';
         }
 
         function showHelp(key) {
-            const texts = { pitch: "Ύψος: Η συχνότητα του ήχου.", vol: "Ένταση: Το επίπεδο του ήχου. Χρησιμοποιήστε τα +/- 1% για ακρίβεια.", annoy: "Ενοχλητικότητα: Πόσο σας απασχολεί σήμερα (1-10).", ear: "Επιλέξτε αυτί.", charts: "Πορεία ανά ημέρα.", history: "Διαχείριση δεδομένων." };
-            alert(texts[key]);
+            const t = { pitch: "Ύψος: Η συχνότητα που ταυτίζεται με την εμβοή σας.", vol: "Ένταση: Το επίπεδο του ήχου συγκριτικά με την εμβοή.", annoy: "Ενοχλητικότητα: Πόσο σας απασχολεί σήμερα (1-10).", ear: "Επιλέξτε πού ακούτε τον ήχο." };
+            alert(t[key]);
         }
 
-        function openTab(tabId, el) {
+        function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            el.classList.add('active');
-            if(tabId === 'charts') setTimeout(renderCharts, 100);
+            document.getElementById('nav-' + tabId).classList.add('active');
+            if(tabId === 'charts') setTimeout(renderCharts, 150);
+            if(tabId === 'history') renderLog();
         }
 
+        // --- Audio Logic ---
         function stepHz(v) { updateFreq(parseInt(document.getElementById('freqInput').value) + v); }
         function stepVol(v) { updateVol(parseInt(document.getElementById('volSlider').value) + v); }
 
@@ -165,18 +188,38 @@
             if (gainNode) gainNode.gain.setTargetAtTime(val / 100, audioCtx.currentTime, 0.05);
         }
 
+        function toggleAudio(play) {
+            if (play) {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    oscillator = audioCtx.createOscillator(); pannerNode = audioCtx.createStereoPanner(); gainNode = audioCtx.createGain();
+                    oscillator.connect(pannerNode).connect(gainNode).connect(audioCtx.destination); oscillator.start();
+                } else audioCtx.resume();
+                updateFreq(document.getElementById('freqInput').value); updateVol(document.getElementById('volSlider').value);
+            } else { if (audioCtx) audioCtx.suspend(); }
+        }
+
+        function setEar(ear, btn) {
+            currentEar = ear;
+            const pan = ear === "Left" ? -1 : (ear === "Right" ? 1 : 0);
+            if (pannerNode) pannerNode.pan.setTargetAtTime(pan, audioCtx.currentTime, 0.05);
+            document.querySelectorAll('.ear-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        // --- Data Logic ---
         function saveToLog() {
-            const entry = { id: Date.now(), date: new Date().toLocaleDateString('el-GR'), hz: document.getElementById('freqInput').value, vol: document.getElementById('volSlider').value + "%", annoy: document.getElementById('annoySlider').value, ear: currentEar };
+            const entry = { id: Date.now(), date: new Date().toLocaleDateString('el-GR'), hz: document.getElementById('freqInput').value, vol: document.getElementById('volSlider').value, annoy: document.getElementById('annoySlider').value, ear: currentEar };
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
             h.unshift(entry);
             localStorage.setItem('tLogs', JSON.stringify(h.slice(0, 100)));
+            alert("Η μέτρηση αποθηκεύτηκε!");
             renderLog();
-            alert("Αποθηκεύτηκε!");
         }
 
         function renderLog() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            document.getElementById('logBody').innerHTML = h.map(i => `<tr><td>${i.date}</td><td>${i.hz}</td><td>${i.vol}</td><td>${i.annoy}</td><td onclick="deleteEntry(${i.id})" style="color:red; font-weight:bold;">✕</td></tr>`).join('');
+            document.getElementById('logBody').innerHTML = h.map(i => `<tr><td>${i.date}</td><td>${i.hz}</td><td>${i.vol}%</td><td>${i.annoy}</td><td onclick="deleteEntry(${i.id})" style="color:red; font-weight:bold; cursor:pointer;">✕</td></tr>`).join('');
         }
 
         function deleteEntry(id) {
@@ -185,50 +228,29 @@
             renderLog();
         }
 
-        // --- Export & Buttons ---
-        document.getElementById('clearBtn').onclick = () => { if(confirm("Διαγραφή ιστορικού;")) { localStorage.setItem('tLogs', '[]'); renderLog(); } };
-        document.getElementById('exportBtn').onclick = () => {
+        function clearHistory() { if(confirm("Προσοχή: Θα διαγραφεί όλο το ιστορικό. Σίγουρα;")) { localStorage.setItem('tLogs', '[]'); renderLog(); } }
+
+        function exportCSV() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            let csv = "Ημερομηνία,Hz,Vol,Annoy,Ear\n" + h.map(i => `${i.date},${i.hz},${i.vol},${i.annoy},${i.ear}`).join("\n");
+            let csv = "Ημερομηνία,Hz,Ένταση,Ενοχλητικότητα,Αυτί\n" + h.map(i => `${i.date},${i.hz},${i.vol}%,${i.annoy},${i.ear}`).join("\n");
             const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "tinnitus.csv"; link.click();
-        };
-        document.getElementById('emailBtn').onclick = () => {
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "tinnitus_log.csv"; link.click();
+        }
+
+        function sendEmail() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            let body = h.map(i => `${i.date}: ${i.hz}Hz, ${i.vol}, Ενοχλ. ${i.annoy}/10`).join("\n");
-            window.location.href = `mailto:nikeleft@hotmail.com?subject=Tinnitus Data&body=${encodeURIComponent(body)}`;
-        };
+            let body = "Ιστορικό Εμβοών:\n" + h.map(i => `${i.date}: ${i.hz}Hz, ${i.vol}%, Ενοχλ. ${i.annoy}`).join("\n");
+            window.location.href = `mailto:nikeleft@hotmail.com?subject=Tinnitus Tracker Data&body=${encodeURIComponent(body)}`;
+        }
 
-        // --- Audio & Setup ---
-        document.getElementById('playBtn').onclick = () => {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                oscillator = audioCtx.createOscillator(); pannerNode = audioCtx.createStereoPanner(); gainNode = audioCtx.createGain();
-                oscillator.connect(pannerNode).connect(gainNode).connect(audioCtx.destination); oscillator.start();
-            } else audioCtx.resume();
-            updateFreq(document.getElementById('freqInput').value); updateVol(document.getElementById('volSlider').value);
-        };
-        document.getElementById('stopBtn').onclick = () => audioCtx && audioCtx.suspend();
-        document.getElementById('freqSlider').oninput = (e) => updateFreq(e.target.value);
-        document.getElementById('volSlider').oninput = (e) => updateVol(e.target.value);
-        document.getElementById('annoySlider').oninput = (e) => document.getElementById('annoyDisplay').textContent = e.target.value + "/10";
-        document.getElementById('unlockVol').onchange = (e) => { document.getElementById('volSlider').max = e.target.checked ? 100 : 50; };
-        document.querySelectorAll('.ear-btn').forEach(btn => {
-            btn.onclick = () => {
-                currentEar = btn.getAttribute('data-val');
-                const pan = currentEar === "Left" ? -1 : (currentEar === "Right" ? 1 : 0);
-                if (pannerNode) pannerNode.pan.setTargetAtTime(pan, audioCtx.currentTime, 0.05);
-                document.querySelectorAll('.ear-btn').forEach(b => b.classList.toggle('active', b === btn));
-            };
-        });
-
+        // --- Charts ---
         function createChart(id, data) {
             const ctx = document.getElementById(id).getContext('2d');
             if (charts[id]) charts[id].destroy();
             const rev = [...data].reverse();
             charts[id] = new Chart(ctx, {
                 type: 'line',
-                data: { labels: rev.map(d => d.date), datasets: [{ label: 'Hz', data: rev.map(d => d.hz), borderColor: '#38bdf8' }, { label: 'Ενοχλ.', data: rev.map(d => d.annoy), borderColor: '#facc15' }] },
+                data: { labels: rev.map(d => d.date), datasets: [{ label: 'Hz', data: rev.map(d => d.hz), borderColor: '#38bdf8', tension: 0.1 }, { label: 'Ενοχλ.', data: rev.map(d => d.annoy), borderColor: '#facc15', tension: 0.1 }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
@@ -240,16 +262,22 @@
             createChart('chartBoth', h.filter(i => i.ear === 'Both'));
         }
 
-        // --- Logic για Εγκατάσταση ---
+        // --- Install Logic ---
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault(); deferredPrompt = e;
             document.getElementById('installBtn').style.display = 'block';
         });
-        document.getElementById('installBtn').addEventListener('click', () => {
+        document.getElementById('installBtn').onclick = () => {
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then((choice) => { if (choice.outcome === 'accepted') document.getElementById('installBtn').style.display = 'none'; });
-        });
+        };
+
+        // Listeners
+        document.getElementById('freqSlider').oninput = (e) => updateFreq(e.target.value);
+        document.getElementById('volSlider').oninput = (e) => updateVol(e.target.value);
+        document.getElementById('annoySlider').oninput = (e) => document.getElementById('annoyDisplay').textContent = e.target.value + "/10";
+        document.getElementById('unlockVol').onchange = (e) => { document.getElementById('volSlider').max = e.target.checked ? 100 : 50; };
 
         window.onload = renderLog;
     </script>
