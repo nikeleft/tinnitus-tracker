@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tinnitus Tracker - Δρ. Νίκος Ελευθεριάδης</title>
     
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2907/2907150.png">
     <meta name="theme-color" content="#0f172a">
@@ -15,6 +13,7 @@
         :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --success: #10b981; --danger: #ef4444; --warning: #facc15; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: #f8fafc; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         
+        /* Αρχική Οθόνη */
         #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; text-align: center; padding: 20px; box-sizing: border-box; }
         #welcome-screen.hidden { display: none; }
         .welcome-title { font-size: 2.2rem; font-weight: 800; color: var(--accent); margin: 0; }
@@ -25,10 +24,12 @@
         .tab-content { display: none; padding: 20px; flex-grow: 1; padding-bottom: 90px; width: 100%; box-sizing: border-box; }
         .tab-content.active { display: flex; flex-direction: column; align-items: center; }
 
+        /* Navigation Bar */
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; border-top: 1px solid #334155; height: 65px; z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #94a3b8; cursor: pointer; }
         .nav-item.active { color: var(--accent); }
         
+        /* UI Components */
         .card { background: var(--card); padding: 1.2rem; border-radius: 20px; width: 100%; max-width: 450px; border: 1px solid #334155; box-sizing: border-box; margin-bottom: 15px; }
         .display { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 10px 0; color: var(--accent); display: flex; justify-content: center; align-items: center; gap: 8px; }
         #freqInput { background: transparent; border: 2px solid #334155; color: var(--accent); font-size: 1.6rem; font-weight: bold; width: 110px; text-align: center; border-radius: 10px; }
@@ -117,9 +118,9 @@
                 </table>
             </div>
             <div style="width:100%; max-width:450px; margin-top:10px;">
-                <button onclick="exportXLSX()" style="width:100%; background:#f59e0b; color:black; margin-bottom:8px; font-weight:bold; padding:12px; border-radius:10px;">Λήψη αρχείου Excel</button>
-                <button onclick="sendEmailToDoctor()" style="width:100%; background:#6366f1; margin-bottom:8px; font-weight:bold; color:white; padding:12px; border-radius:10px;">Αποστολή στον Ιατρό</button>
-                <button onclick="clearHistory()" style="width:100%; background:var(--danger); opacity:0.8; margin-top:10px;">Καθαρισμός Ιστορικού</button>
+                <button onclick="exportCSV()" style="width:100%; background:#f59e0b; color:black; margin-bottom:8px; font-weight:bold;">Εξαγωγή σε Excel (CSV)</button>
+                <button onclick="sendEmail()" style="width:100%; background:#6366f1; margin-bottom:8px; font-weight:bold;">Αποστολή στον Ιατρό</button>
+                <button onclick="clearHistory()" style="width:100%; background:var(--danger); opacity:0.8;">Καθαρισμός Ιστορικού</button>
             </div>
         </div>
 
@@ -184,13 +185,17 @@
                     oscillator = audioCtx.createOscillator(); 
                     pannerNode = audioCtx.createStereoPanner(); 
                     gainNode = audioCtx.createGain();
+                    
+                    // Απευθείας ρύθμιση συχνότητας χωρίς ομαλή μετάβαση στο ξεκίνημα
                     const initialFreq = parseInt(document.getElementById('freqInput').value);
                     oscillator.frequency.value = initialFreq;
+                    
                     oscillator.connect(pannerNode).connect(gainNode).connect(audioCtx.destination); 
                     oscillator.start();
                 } else {
                     audioCtx.resume();
                 }
+                // Ενημέρωση τιμών αμέσως μετά την εκκίνηση
                 updateFreq(document.getElementById('freqInput').value); 
                 updateVol(document.getElementById('volSlider').value);
             } else { 
@@ -207,7 +212,7 @@
         }
 
         function saveToLog() {
-            const entry = { id: Date.now(), Ημερομηνία: new Date().toLocaleDateString('el-GR'), "Ύψος (Hz)": document.getElementById('freqInput').value, Ένταση: document.getElementById('volSlider').value + "%", Ενοχλητικότητα: document.getElementById('annoySlider').value + "/10", Αυτί: currentEar };
+            const entry = { id: Date.now(), date: new Date().toLocaleDateString('el-GR'), hz: document.getElementById('freqInput').value, vol: document.getElementById('volSlider').value, annoy: document.getElementById('annoySlider').value, ear: currentEar };
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
             h.unshift(entry);
             localStorage.setItem('tLogs', JSON.stringify(h.slice(0, 100)));
@@ -217,7 +222,7 @@
 
         function renderLog() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            document.getElementById('logBody').innerHTML = h.map(i => `<tr><td>${i.Ημερομηνία}</td><td>${i["Ύψος (Hz)"] || i.hz}</td><td>${i.Ένταση || i.vol + '%'}</td><td>${(i.Ενοχλητικότητα || i.annoy).toString().split('/')[0]}</td><td onclick="deleteEntry(${i.id})" style="color:red; font-weight:bold; cursor:pointer;">✕</td></tr>`).join('');
+            document.getElementById('logBody').innerHTML = h.map(i => `<tr><td>${i.date}</td><td>${i.hz}</td><td>${i.vol}%</td><td>${i.annoy}</td><td onclick="deleteEntry(${i.id})" style="color:red; font-weight:bold; cursor:pointer;">✕</td></tr>`).join('');
         }
 
         function deleteEntry(id) {
@@ -228,34 +233,17 @@
 
         function clearHistory() { if(confirm("Προσοχή: Θα διαγραφεί όλο το ιστορικό. Σίγουρα;")) { localStorage.setItem('tLogs', '[]'); renderLog(); } }
 
-        // --- ΛΕΙΤΟΥΡΓΙΑ EXCEL ---
-        function exportXLSX() {
+        function exportCSV() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            if(h.length === 0) { alert("Δεν υπάρχουν δεδομένα!"); return; }
-            
-            // Καθαρισμός για το Excel
-            const cleanData = h.map(({id, ...rest}) => rest);
-            
-            const ws = XLSX.utils.json_to_sheet(cleanData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Μετρήσεις");
-            
-            XLSX.writeFile(wb, "Tinnitus_Log.xlsx");
+            let csv = "Ημερομηνία,Hz,Ένταση,Ενοχλητικότητα,Αυτί\n" + h.map(i => `${i.date},${i.hz},${i.vol}%,${i.annoy},${i.ear}`).join("\n");
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "tinnitus_log.csv"; link.click();
         }
 
-        // --- ΛΕΙΤΟΥΡΓΙΑ EMAIL ---
-        function sendEmailToDoctor() {
+        function sendEmail() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            if(h.length === 0) { alert("Δεν υπάρχουν δεδομένα!"); return; }
-
-            let body = "ΙΣΤΟΡΙΚΟ ΜΕΤΡΗΣΕΩΝ ΕΜΒΟΩΝ\n";
-            body += "---------------------------------\n";
-            body += "Ημ/νία | Ύψος(Hz) | Ένταση | Ενοχλ.\n";
-            
-            body += h.map(i => `${i.Ημερομηνία} | ${i["Ύψος (Hz)"] || i.hz} | ${i.Ένταση || i.vol+'%'} | ${i.Ενοχλητικότητα || i.annoy}`).join("\n");
-
-            const subject = encodeURIComponent("Tinnitus Tracker Data");
-            window.location.href = `mailto:nikeleft@hotmail.com?subject=${subject}&body=${encodeURIComponent(body)}`;
+            let body = "Ιστορικό Εμβοών:\n" + h.map(i => `${i.date}: ${i.hz}Hz, ${i.vol}%, Ενοχλ. ${i.annoy}`).join("\n");
+            window.location.href = `mailto:nikeleft@hotmail.com?subject=Tinnitus Tracker Data&body=${encodeURIComponent(body)}`;
         }
 
         let deferredPrompt;
