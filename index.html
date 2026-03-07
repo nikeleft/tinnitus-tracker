@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tinnitus Tracker - Δρ. Νίκος Ελευθεριάδης</title>
     
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2907/2907150.png">
     <meta name="theme-color" content="#0f172a">
@@ -117,9 +115,8 @@
                 </table>
             </div>
             <div style="width:100%; max-width:450px; margin-top:10px;">
-                <button onclick="exportXLSX()" style="width:100%; background:#f59e0b; color:black; margin-bottom:8px; font-weight:bold;">Λήψη αρχείου Excel</button>
-                <button onclick="sendExcelToDoctor()" style="width:100%; background:#6366f1; margin-bottom:8px; font-weight:bold;">Αποστολή στον Ιατρό (Excel)</button>
-                <button onclick="clearHistory()" style="width:100%; background:var(--danger); opacity:0.8;">Καθαρισμός Ιστορικού</button>
+                <button onclick="sendEmailToDoctor()" style="width:100%; background:#6366f1; margin-bottom:8px; font-weight:bold; color:white; padding:15px; border-radius:12px;">Αποστολή στον Ιατρό</button>
+                <button onclick="clearHistory()" style="width:100%; background:var(--danger); opacity:0.8; margin-top:10px;">Καθαρισμός Ιστορικού</button>
             </div>
         </div>
 
@@ -207,7 +204,7 @@
         }
 
         function saveToLog() {
-            const entry = { Ημερομηνία: new Date().toLocaleString('el-GR'), "Ύψος (Hz)": document.getElementById('freqInput').value, Ένταση: document.getElementById('volSlider').value + "%", Ενοχλητικότητα: document.getElementById('annoySlider').value + "/10", Αυτί: currentEar, id: Date.now() };
+            const entry = { id: Date.now(), date: new Date().toLocaleDateString('el-GR'), hz: document.getElementById('freqInput').value, vol: document.getElementById('volSlider').value, annoy: document.getElementById('annoySlider').value, ear: currentEar };
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
             h.unshift(entry);
             localStorage.setItem('tLogs', JSON.stringify(h.slice(0, 100)));
@@ -217,7 +214,7 @@
 
         function renderLog() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            document.getElementById('logBody').innerHTML = h.map(i => `<tr><td>${i.Ημερομηνία.split(',')[0]}</td><td>${i["Ύψος (Hz)"]}</td><td>${i.Ένταση}</td><td>${i.Ενοχλητικότητα.split('/')[0]}</td><td onclick="deleteEntry(${i.id})" style="color:red; font-weight:bold; cursor:pointer;">✕</td></tr>`).join('');
+            document.getElementById('logBody').innerHTML = h.map(i => `<tr><td>${i.date}</td><td>${i.hz}</td><td>${i.vol}%</td><td>${i.annoy}</td><td onclick="deleteEntry(${i.id})" style="color:red; font-weight:bold; cursor:pointer;">✕</td></tr>`).join('');
         }
 
         function deleteEntry(id) {
@@ -228,51 +225,22 @@
 
         function clearHistory() { if(confirm("Προσοχή: Θα διαγραφεί όλο το ιστορικό. Σίγουρα;")) { localStorage.setItem('tLogs', '[]'); renderLog(); } }
 
-        // --- ΝΕΕΣ ΛΕΙΤΟΥΡΓΙΕΣ EXCEL ---
-
-        function generateExcelBlob() {
+        function sendEmailToDoctor() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            if(h.length === 0) { alert("Δεν υπάρχουν δεδομένα!"); return null; }
+            if(h.length === 0) { alert("Δεν υπάρχουν δεδομένα!"); return; }
+
+            // Δημιουργία κειμένου σε μορφή "Πίνακα" για εύκολη ανάγνωση και αντιγραφή
+            let body = "ΙΣΤΟΡΙΚΟ ΜΕΤΡΗΣΕΩΝ ΕΜΒΟΩΝ\n";
+            body += "---------------------------------\n";
+            body += "Ημ/νία | Ύψος(Hz) | Ένταση | Ενοχλ.\n";
+            body += "---------------------------------\n";
             
-            // Καθαρισμός δεδομένων για το Excel (αφαίρεση του id)
-            const cleanData = h.map(({id, ...rest}) => rest);
+            body += h.map(i => `${i.date} | ${i.hz} | ${i.vol}% | ${i.annoy}/10`).join("\n");
             
-            const ws = XLSX.utils.json_to_sheet(cleanData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Μετρήσεις");
-            
-            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            return new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        }
+            body += "\n\n(Για επεξεργασία σε Excel, κάντε Copy-Paste τα παραπάνω δεδομένα)";
 
-        function exportXLSX() {
-            const blob = generateExcelBlob();
-            if(!blob) return;
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "Tinnitus_Report.xlsx";
-            link.click();
-        }
-
-        async function sendExcelToDoctor() {
-            const blob = generateExcelBlob();
-            if(!blob) return;
-
-            const file = new File([blob], "Tinnitus_Report.xlsx", { type: blob.type });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: 'Δεδομένα Tinnitus Tracker',
-                        text: 'Αποστολή ιστορικού μετρήσεων εμβοών σε αρχείο Excel.'
-                    });
-                } catch (err) {
-                    console.error("Share failed:", err);
-                }
-            } else {
-                alert("Η συσκευή σας δεν υποστηρίζει την άμεση αποστολή αρχείων. Παρακαλώ κατεβάστε το αρχείο Excel και στείλτε το χειροκίνητα.");
-            }
+            const subject = encodeURIComponent("Tinnitus Tracker Data - Ιστορικό");
+            window.location.href = `mailto:nikeleft@hotmail.com?subject=${subject}&body=${encodeURIComponent(body)}`;
         }
 
         let deferredPrompt;
