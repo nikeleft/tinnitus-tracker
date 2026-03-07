@@ -7,48 +7,107 @@
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2907/2907150.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
     
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --success: #10b981; --danger: #ef4444; --warning: #facc15; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #f8fafc; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         
-        /* Splash Screen */
-        #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; text-align: center; padding: 20px; box-sizing: border-box; }
+        * { box-sizing: border-box; }
+
+        body { 
+            font-family: -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: #f8fafc; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+        
+        /* Reverted Splash Screen */
+        #welcome-screen { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 2000; 
+            text-align: center; 
+            padding: 20px; 
+        }
         #welcome-screen.hidden { display: none; }
         .welcome-title { font-size: 2.2rem; font-weight: 800; color: var(--accent); margin: 0; }
         .enter-btn { margin-top: 30px; padding: 15px 50px; border-radius: 30px; border: 2px solid var(--accent); background: transparent; color: var(--accent); font-weight: bold; cursor: pointer; font-size: 1.1rem; }
 
-        /* Main Layout */
-        #app-content { display: none; flex-direction: column; min-height: 100vh; }
-        .tab-content { display: none; padding: 20px; flex-grow: 1; padding-bottom: 90px; width: 100%; box-sizing: border-box; }
+        #app-content { display: none; flex-direction: column; height: 100%; }
+        
+        .tab-content { 
+            display: none; 
+            padding: 10px 15px; 
+            flex: 1; 
+            width: 100%; 
+            overflow-y: auto; 
+            padding-bottom: 80px; 
+        }
         .tab-content.active { display: flex; flex-direction: column; align-items: center; }
 
         .nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; border-top: 1px solid #334155; height: 65px; z-index: 1000; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #94a3b8; cursor: pointer; }
         .nav-item.active { color: var(--accent); }
         
-        /* UI Components */
-        .card { background: var(--card); padding: 1.2rem; border-radius: 20px; width: 100%; max-width: 450px; border: 1px solid #334155; box-sizing: border-box; margin-bottom: 15px; }
-        .display { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 10px 0; color: var(--accent); display: flex; justify-content: center; align-items: center; gap: 8px; }
-        #freqInput { background: transparent; border: 2px solid #334155; color: var(--accent); font-size: 1.6rem; font-weight: bold; width: 110px; text-align: center; border-radius: 10px; }
-        
-        .row { display: flex; justify-content: center; gap: 8px; width: 100%; margin-top: 5px; }
-        button { padding: 12px; border-radius: 10px; border: none; font-weight: 600; background: #334155; color: white; cursor: pointer; }
-        
-        /* Ear Selection Buttons - BIGGER */
-        .ear-btn { flex: 1; padding: 18px 10px !important; font-size: 1.05rem !important; border-radius: 15px !important; transition: all 0.2s ease; }
-        .ear-btn.active { background: var(--accent) !important; color: var(--bg) !important; transform: scale(1.02); }
+        .card { 
+            background: var(--card); 
+            padding: 1rem; 
+            border-radius: 20px; 
+            width: 100%; 
+            max-width: 450px; 
+            border: 1px solid #334155; 
+            display: flex;
+            flex-direction: column;
+            gap: 2vh; 
+        }
 
-        .play-btn { background: #0ea5e9; flex: 1; font-size: 1.1rem; }
-        .stop-btn { background: var(--danger); flex: 1; font-size: 1.1rem; }
-        .save-btn { background: var(--success); width: 100%; margin-top: 15px; padding: 18px; font-size: 1.1rem; font-weight: bold; border-radius: 15px; }
+        .display { font-size: 1.5rem; font-weight: bold; text-align: center; color: var(--accent); display: flex; justify-content: center; align-items: center; gap: 5px; }
+        #freqInput { background: transparent; border: 1.5px solid #334155; color: var(--accent); font-size: 1.4rem; font-weight: bold; width: 90px; text-align: center; border-radius: 8px; }
+        
+        .row { display: flex; justify-content: center; gap: 8px; width: 100%; }
+        
+        /* Smaller Step Buttons to save space */
+        .step-btn { padding: 6px; font-size: 0.85rem; background: #334155; color: white; border: none; border-radius: 8px; flex: 1; }
+        
+        /* Bigger Ear Selection Buttons */
+        .ear-btn { flex: 1; padding: 15px 5px; font-size: 0.95rem; border-radius: 12px; border: none; background: #334155; color: white; font-weight: 600; transition: 0.2s; }
+        .ear-btn.active { background: var(--accent); color: var(--bg); }
+
+        .play-btn { background: #0ea5e9; flex: 1; padding: 12px; border-radius: 10px; font-size: 1rem; color: white; border: none; font-weight: bold; }
+        .stop-btn { background: var(--danger); flex: 1; padding: 12px; border-radius: 10px; font-size: 1rem; color: white; border: none; font-weight: bold; }
+        
+        .save-btn { 
+            background: var(--success); 
+            width: 100%; 
+            padding: 16px; 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            border-radius: 15px; 
+            color: white; 
+            border: none;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        input[type=range] { width: 100%; accent-color: var(--accent); height: 30px; margin: 0; }
+        .help-icon { font-size: 0.75rem; color: #94a3b8; border: 1px solid #475569; border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; }
         
         .log-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .log-table th, .log-table td { padding: 10px 5px; border-bottom: 1px solid #334155; text-align: left; }
-        
-        .help-icon { font-size: 0.8rem; color: #94a3b8; cursor: pointer; border: 1px solid #475569; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; margin-left: 5px; }
-        input[type=range] { width: 100%; accent-color: var(--accent); height: 40px; }
+        .log-table th, .log-table td { padding: 8px 4px; border-bottom: 1px solid #334155; text-align: left; }
     </style>
 </head>
 <body>
@@ -62,67 +121,68 @@
     <div id="app-content">
         <div id="setup" class="tab-content active">
             <div class="card">
-                <h3 style="text-align:center; margin:0 0 10px; color:#94a3b8;">ρυθμίσεις ήχου</h3>
-                
-                <div class="display">
-                    <span>ύψος</span><span class="help-icon" onclick="showHelp('pitch')">?</span>: 
-                    <input type="number" id="freqInput" value="4000"> <span>Hz</span>
-                </div>
-                <input type="range" id="freqSlider" min="125" max="10000" value="4000">
-                <div class="row">
-                    <button onclick="stepHz(-1)" style="flex:1;">− 1Hz</button>
-                    <button onclick="stepHz(1)" style="flex:1;">+ 1Hz</button>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                    <div class="display">
+                        <span>ύψος</span><span class="help-icon" onclick="showHelp('pitch')">?</span>: 
+                        <input type="number" id="freqInput" value="4000"> <span>Hz</span>
+                    </div>
+                    <input type="range" id="freqSlider" min="125" max="10000" value="4000">
+                    <div class="row">
+                        <button class="step-btn" onclick="stepHz(-1)">− 1Hz</button>
+                        <button class="step-btn" onclick="stepHz(1)">+ 1Hz</button>
+                    </div>
                 </div>
 
-                <div style="margin-top:25px;">
+                <div style="display:flex; flex-direction:column; gap:5px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>ένταση <span class="help-icon" onclick="showHelp('vol')">?</span></span>
-                        <span id="volDisplay" style="color:var(--success); font-weight:bold; font-size:1.4rem;">10%</span>
+                        <span style="font-size:0.9rem;">ένταση <span class="help-icon" onclick="showHelp('vol')">?</span></span>
+                        <span id="volDisplay" style="color:var(--success); font-weight:bold; font-size:1.2rem;">10%</span>
                     </div>
                     <input type="range" id="volSlider" min="0" max="50" value="10">
                     <div class="row">
-                        <button onclick="stepVol(-1)" style="flex:1;">− 1%</button>
-                        <button onclick="stepVol(1)" style="flex:1;">+ 1%</button>
+                        <button class="step-btn" onclick="stepVol(-1)">− 1%</button>
+                        <button class="step-btn" onclick="stepVol(1)">+ 1%</button>
                     </div>
-                    <label style="font-size:0.75rem; color:var(--danger); display:block; margin-top:10px;">
+                    <label style="font-size:0.7rem; color:var(--danger); margin-top:2px;">
                         <input type="checkbox" id="unlockVol"> ξεκλείδωμα 100%
                     </label>
                 </div>
 
-                <div style="margin-top:25px; padding:10px; border:1px dashed var(--warning); border-radius:10px;">
-                    <div style="display:flex; justify-content:space-between; color:var(--warning); font-weight:bold;">
-                        <span>ενοχλητικότητα <span class="help-icon" onclick="showHelp('annoy')">?</span></span>
-                        <span id="annoyDisplay" style="font-size:1.2rem;">5/10</span>
+                <div style="padding:8px; border:1px dashed var(--warning); border-radius:10px;">
+                    <div style="display:flex; justify-content:space-between; color:var(--warning); font-weight:bold; font-size:0.9rem;">
+                        <span>ενοχλητικότητα</span>
+                        <span id="annoyDisplay">5/10</span>
                     </div>
                     <input type="range" id="annoySlider" min="1" max="10" value="5" style="accent-color:var(--warning);">
                 </div>
 
-                <div class="row" style="margin-top:20px; gap:10px;">
+                <div class="row" style="gap:8px;">
                     <button class="ear-btn" onclick="setEar('Left', this)">αριστερό</button>
                     <button class="ear-btn active" onclick="setEar('Both', this)">και τα δύο</button>
                     <button class="ear-btn" onclick="setEar('Right', this)">δεξί</button>
                 </div>
                 
-                <div class="row" style="margin-top:20px; gap:12px;">
+                <div class="row" style="gap:10px;">
                     <button id="playBtn" class="play-btn" onclick="toggleAudio(true)">▶ Παίξε</button>
                     <button id="stopBtn" class="stop-btn" onclick="toggleAudio(false)">II Παύση</button>
                 </div>
+
                 <button class="save-btn" onclick="saveToLog()">ΑΠΟΘΗΚΕΥΣΗ ΜΕΤΡΗΣΗΣ</button>
             </div>
         </div>
 
         <div id="history" class="tab-content">
-            <h3>ιστορικό</h3>
-            <div class="card" style="padding:5px; overflow-x:auto; width:100%;">
+            <h3 style="margin-top:0;">ιστορικό</h3>
+            <div class="card" style="padding:5px; overflow-x:auto;">
                 <table class="log-table">
                     <thead><tr><th>ημ/νία</th><th>Hz</th><th>vol</th><th>ενοχλ.</th><th></th></tr></thead>
                     <tbody id="logBody"></tbody>
                 </table>
             </div>
-            <div style="width:100%; max-width:450px; margin-top:10px;">
-                <button onclick="exportCSV()" style="width:100%; background:#f59e0b; color:black; margin-bottom:12px; font-weight:bold; padding:15px; border-radius:12px;">1. Εξαγωγή σε Excel (CSV)</button>
-                <button onclick="sendEmail()" style="width:100%; background:#6366f1; margin-bottom:12px; font-weight:bold; color:white; padding:15px; border-radius:12px;">2. Αποστολή στον Ιατρό</button>
-                <button onclick="clearHistory()" style="width:100%; background:var(--danger); opacity:0.8; margin-top:20px; padding:10px; border-radius:10px; font-size:0.8rem;">Καθαρισμός Ιστορικού</button>
+            <div style="width:100%; max-width:450px; margin-top:15px; display:flex; flex-direction:column; gap:10px;">
+                <button onclick="exportCSV()" style="background:#f59e0b; color:black; font-weight:bold; padding:15px; border-radius:12px; border:none;">1. Εξαγωγή σε Excel (CSV)</button>
+                <button onclick="sendEmail()" style="background:#6366f1; font-weight:bold; color:white; padding:15px; border-radius:12px; border:none;">2. Αποστολή στον Ιατρό</button>
+                <button onclick="clearHistory()" style="background:var(--danger); opacity:0.8; padding:10px; border-radius:10px; border:none; color:white; font-size:0.8rem;">Καθαρισμός Ιστορικού</button>
             </div>
         </div>
 
@@ -136,17 +196,10 @@
         let audioCtx, oscillator, pannerNode, gainNode;
         let currentEar = "Both";
 
-        function startApp() {
-            document.getElementById('welcome-screen').classList.add('hidden');
-            document.getElementById('app-content').style.display = 'flex';
-        }
-
+        function startApp() { document.getElementById('welcome-screen').classList.add('hidden'); document.getElementById('app-content').style.display = 'flex'; }
+        
         function showHelp(key) {
-            const t = { 
-                pitch: "Ύψος: Η συχνότητα που ταυτίζεται με την εμβοή σας.", 
-                vol: "Ένταση: Το επίπεδο του ήχου συγκριτικά με την εμβοή.", 
-                annoy: "Ενοχλητικότητα: Πόσο σας απασχολεί σήμερα (1-10)." 
-            };
+            const t = { pitch: "Ύψος: Η συχνότητα της εμβοής σας.", vol: "Ένταση: Το επίπεδο του ήχου." };
             alert(t[key]);
         }
 
@@ -180,15 +233,11 @@
             if (play) {
                 if (!audioCtx) {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    oscillator = audioCtx.createOscillator(); 
-                    pannerNode = audioCtx.createStereoPanner(); 
-                    gainNode = audioCtx.createGain();
+                    oscillator = audioCtx.createOscillator(); pannerNode = audioCtx.createStereoPanner(); gainNode = audioCtx.createGain();
                     oscillator.frequency.value = parseInt(document.getElementById('freqInput').value);
-                    oscillator.connect(pannerNode).connect(gainNode).connect(audioCtx.destination); 
-                    oscillator.start();
+                    oscillator.connect(pannerNode).connect(gainNode).connect(audioCtx.destination); oscillator.start();
                 } else { audioCtx.resume(); }
-                updateFreq(document.getElementById('freqInput').value); 
-                updateVol(document.getElementById('volSlider').value);
+                updateFreq(document.getElementById('freqInput').value); updateVol(document.getElementById('volSlider').value);
             } else { if (audioCtx) audioCtx.suspend(); }
         }
 
@@ -201,14 +250,7 @@
         }
 
         function saveToLog() {
-            const entry = { 
-                id: Date.now(), 
-                date: new Date().toLocaleDateString('el-GR'), 
-                hz: document.getElementById('freqInput').value, 
-                vol: document.getElementById('volSlider').value, 
-                annoy: document.getElementById('annoySlider').value, 
-                ear: currentEar 
-            };
+            const entry = { id: Date.now(), date: new Date().toLocaleDateString('el-GR'), hz: document.getElementById('freqInput').value, vol: document.getElementById('volSlider').value, annoy: document.getElementById('annoySlider').value, ear: currentEar };
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
             h.unshift(entry);
             localStorage.setItem('tLogs', JSON.stringify(h.slice(0, 100)));
@@ -227,11 +269,11 @@
             renderLog();
         }
 
-        function clearHistory() { if(confirm("Προσοχή: Θα διαγραφεί όλο το ιστορικό. Σίγουρα;")) { localStorage.setItem('tLogs', '[]'); renderLog(); } }
+        function clearHistory() { if(confirm("Διαγραφή ιστορικού;")) { localStorage.setItem('tLogs', '[]'); renderLog(); } }
 
         function exportCSV() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            if(h.length === 0) { alert("Δεν υπάρχουν δεδομένα!"); return; }
+            if(h.length === 0) { alert("Κενό ιστορικό!"); return; }
             const earMap = { "Left": "Αριστερό", "Right": "Δεξί", "Both": "Και τα δύο" };
             let csv = "Ημερομηνία,Hz,Ένταση,Ενοχλητικότητα,Αυτί\n" + h.map(i => `${i.date},${i.hz},${i.vol}%,${i.annoy},${earMap[i.ear] || i.ear}`).join("\n");
             const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
@@ -240,16 +282,13 @@
 
         function sendEmail() {
             const h = JSON.parse(localStorage.getItem('tLogs') || '[]');
-            if (h.length === 0) { alert("Δεν υπάρχουν δεδομένα για αποστολή!"); return; }
-            
+            if (h.length === 0) { alert("Κενό ιστορικό!"); return; }
             const emailTo = "nikeleft@hotmail.com";
-            const subject = encodeURIComponent("Ιστορικό Εμβοών - Αρχείο Μετρήσεων");
-            const body = encodeURIComponent("Γεια σας,\n\nΣας στέλνω το ιστορικό των μετρήσεών μου.\n\n(Παρακαλώ επισυνάψτε εδώ το αρχείο 'tinnitus_log.csv' που μόλις κατέβηκε στη συσκευή σας).");
-            
+            const subject = encodeURIComponent("Ιστορικό Εμβοών");
+            const body = encodeURIComponent("Σας στέλνω τις μετρήσεις μου.\n\n(Επισυνάψτε το αρχείο 'tinnitus_log.csv' εδώ).");
             window.location.href = `mailto:${emailTo}?subject=${subject}&body=${body}`;
         }
 
-        // Listeners
         document.getElementById('freqSlider').oninput = (e) => updateFreq(e.target.value);
         document.getElementById('volSlider').oninput = (e) => updateVol(e.target.value);
         document.getElementById('annoySlider').oninput = (e) => document.getElementById('annoyDisplay').textContent = e.target.value + "/10";
